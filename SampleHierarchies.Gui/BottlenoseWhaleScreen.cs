@@ -1,4 +1,4 @@
-﻿using SampleHierarchies.Data;
+using SampleHierarchies.Data;
 using SampleHierarchies.Data.Mammals;
 using SampleHierarchies.Enums;
 using SampleHierarchies.Interfaces.Data;
@@ -14,9 +14,17 @@ namespace SampleHierarchies.Gui
     public class BottlenoseWhaleScreen : Screen
     {
         #region Ctor and Properties
+        /// <summary>
+        /// Properties
+        /// </summary>
         private IDataService _dataService;
         private ISettings _settings;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="dataService"></param>
+        /// <param name="settings"></param>
         public BottlenoseWhaleScreen(IDataService dataService, ISettings settings)
         {
             _dataService = dataService;
@@ -79,6 +87,11 @@ namespace SampleHierarchies.Gui
             }
         }
 
+        /// <summary>
+        /// Main function of Add and Edit Bottlenose whale
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public BottlenoseWhale AddEditBottlenoseWhale()
         {
             bool isEcholocation = false;
@@ -194,6 +207,9 @@ namespace SampleHierarchies.Gui
             return whale;
         }
 
+        /// <summary>
+        /// Editing recent Bottlenose whale that was created by user
+        /// </summary>
         private void EditBottlenoseWhaleRecent()
         {
             try
@@ -224,6 +240,9 @@ namespace SampleHierarchies.Gui
             }
         }
 
+        /// <summary>
+        /// Delete an existing Bottlenose whale
+        /// </summary>
         private void DeleteBottlenoseWhale()
         {
             try
@@ -251,7 +270,9 @@ namespace SampleHierarchies.Gui
                 Console.WriteLine("Invalid input.");
             }
         }
-
+        /// <summary>
+        /// Add new Bottlenose whale
+        /// </summary>
         private void AddBottlenoseWhale()
         {
             try
@@ -266,6 +287,9 @@ namespace SampleHierarchies.Gui
             }
         }
 
+        /// <summary>
+        /// Shows list of all Bottlenose whales
+        /// </summary>
         private void ListOfBottlenoseWhales()
         {
             Console.WriteLine();
