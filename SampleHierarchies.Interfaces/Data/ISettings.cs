@@ -18,7 +18,7 @@ public interface ISettings
     public string? ScreenColor { get; set; }
 
     T ReadValue<T>(string propertyName, T defaultValue);
-    void SetFilePath(string filePath);
+    // void SetFilePath(string filePath);
 
     #endregion // Interface Members
 }

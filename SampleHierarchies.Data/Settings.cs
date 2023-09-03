@@ -10,6 +10,7 @@ namespace SampleHierarchies.Data
 {
     public class Settings : ISettings
     {
+        #region Ctor and Properties
         public string Version { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public string? ScreenColor { get; set; }
 
@@ -17,14 +18,25 @@ namespace SampleHierarchies.Data
 
         static Settings()
         {
-            FilePath = "settings.json";
+            FilePath = "settings.json"; 
         }
+        #endregion
 
+        #region Public Methods
+        /* Mistake
         public void SetFilePath(string filePath)
         {
-            FilePath = filePath;
+           FilePath = filePath;
         }
+        */
 
+        /// <summary>
+        /// The method that allows to take a color from settings.json file
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="propertyName"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public T ReadValue<T>(string propertyName, T defaultValue)
         {
             try
@@ -46,5 +58,6 @@ namespace SampleHierarchies.Data
 
             return defaultValue;
         }
+        #endregion
     }
 }
