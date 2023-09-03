@@ -1,4 +1,4 @@
-﻿using SampleHierarchies.Data;
+using SampleHierarchies.Data;
 using SampleHierarchies.Data.Mammals;
 using SampleHierarchies.Data.ScreenSettings;
 using SampleHierarchies.Enums;
