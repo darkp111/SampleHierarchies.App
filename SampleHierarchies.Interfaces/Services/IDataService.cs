@@ -1,4 +1,4 @@
-﻿using SampleHierarchies.Interfaces.Data;
+﻿using SampleHierarchies.Interfaces.Data.Animals;
 
 namespace SampleHierarchies.Interfaces.Services;
 

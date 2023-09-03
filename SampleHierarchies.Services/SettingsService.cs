@@ -1,5 +1,4 @@
-﻿using SampleHierarchies.Interfaces.Data;
-using SampleHierarchies.Interfaces.Services;
+﻿using SampleHierarchies.Interfaces.Services;
 
 namespace SampleHierarchies.Services;
 
@@ -15,7 +14,7 @@ public class SettingsService : ISettingsService
 
     /// <inheritdoc/>
     /// 
-    private ISettings? settings;
+    private readonly ISettings? settings;
     public ISettings? Read(string jsonPath)
     {
         ISettings? result = null;

@@ -1,4 +1,4 @@
-﻿using SampleHierarchies.Interfaces.Data.Mammals;
+﻿using SampleHierarchies.Interfaces.Data.Animals.Mammals;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +30,7 @@ namespace SampleHierarchies.Data.Mammals
         public string? TerritoryDefenseDescribe { get; set; }
 
         public Lion(string name, int age, bool isApexPredator, string? apexPredatorDescribe, bool isPuckHunter, string? puckHunterDescribe,
-            string? mane, bool isRoaringCommunication, string? roaringCommunicationDescribe, bool isTerritoryDefense, string? territoryDefenseDescribe) : base(name,age,MammalSpecies.Lion)
+            string? mane, bool isRoaringCommunication, string? roaringCommunicationDescribe, bool isTerritoryDefense, string? territoryDefenseDescribe) : base(name, age, MammalSpecies.Lion)
         {
             IsApexPredator = isApexPredator;
             ApexPredatorDescribe = apexPredatorDescribe;
@@ -43,8 +43,6 @@ namespace SampleHierarchies.Data.Mammals
             TerritoryDefenseDescribe = territoryDefenseDescribe;
         }
 
-
         #endregion
-
     }
 }

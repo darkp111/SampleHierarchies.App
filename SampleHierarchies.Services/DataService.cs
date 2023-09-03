@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SampleHierarchies.Data;
-using SampleHierarchies.Interfaces.Data;
+using SampleHierarchies.Interfaces.Data.Animals;
 using SampleHierarchies.Interfaces.Services;
 using System.Diagnostics;
 

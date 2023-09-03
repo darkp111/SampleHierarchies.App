@@ -1,6 +1,4 @@
-﻿using SampleHierarchies.Interfaces.Data;
-
-namespace SampleHierarchies.Interfaces.Services;
+﻿namespace SampleHierarchies.Interfaces.Services;
 
 public interface ISettingsService
 {
@@ -11,7 +9,6 @@ public interface ISettingsService
     /// </summary>
     /// <param name="jsonPath">Json path</param>
     /// <returns></returns>
-    ISettings? Read(string jsonPath);
 
     /// <summary>
     /// Write settings.
@@ -19,8 +16,6 @@ public interface ISettingsService
     /// <param name="settings">Settings to written</param>
     /// <param name="jsonPath">Json path</param>
     void Write(ISettings settings, string jsonPath);
-
-    ISettings? GetSettings();
 
     #endregion // Interface Members
 }

@@ -1,4 +1,5 @@
-﻿using SampleHierarchies.Services;
+﻿using SampleHierarchies.Data.ScreenSettings;
+using SampleHierarchies.Services;
 
 namespace SampleHierarchies.Gui;
 
@@ -15,12 +16,12 @@ public abstract class Screen
     /// 
     public SettingsService? _settingsService;
 
+    public string? _screenDefinitionJson;
+
     public virtual void Show()
     {
         Console.WriteLine("Showing screen");
     }
-
-
 
     #endregion // Public Methods
 }

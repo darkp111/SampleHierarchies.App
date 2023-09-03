@@ -1,5 +1,5 @@
-﻿using SampleHierarchies.Interfaces.Data;
-using SampleHierarchies.Interfaces.Data.Mammals;
+﻿using SampleHierarchies.Interfaces.Data.Animals;
+using SampleHierarchies.Interfaces.Data.Animals.Mammals;
 
 namespace SampleHierarchies.Data.Mammals;
 

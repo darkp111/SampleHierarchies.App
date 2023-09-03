@@ -1,4 +1,4 @@
-﻿using SampleHierarchies.Interfaces.Data.Mammals;
+﻿using SampleHierarchies.Interfaces.Data.Animals.Mammals;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,7 +42,5 @@ namespace SampleHierarchies.Data.Mammals
         }
 
         #endregion
-
-
     }
 }

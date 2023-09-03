@@ -4,31 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using SampleHierarchies.Interfaces.Data;
+using Newtonsoft.Json.Linq;
+using SampleHierarchies.Interfaces.Services;
 
-namespace SampleHierarchies.Data
+namespace SampleHierarchies.Data.ScreenSettings
 {
     public class Settings : ISettings
     {
         #region Ctor and Properties
-        public string Version { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Version { get => throw new NotImplementedException(); set => throw new NotImplementedException(); } 
         public string? ScreenColor { get; set; }
 
-        public static string? FilePath { get; set;}
+        public string? FilePath { get; set; }
 
-        static Settings()
+        public Settings()
         {
-            FilePath = "settings.json"; 
+            FilePath = "settings.json";
         }
         #endregion
 
         #region Public Methods
-        /* Mistake
-        public void SetFilePath(string filePath)
-        {
-           FilePath = filePath;
-        }
-        */
 
         /// <summary>
         /// The method that allows to take a color from settings.json file
@@ -44,11 +39,23 @@ namespace SampleHierarchies.Data
                 if (File.Exists(FilePath))
                 {
                     string json = File.ReadAllText(FilePath);
-                    dynamic jsonObject = JsonConvert.DeserializeObject(json);
-                    if (jsonObject != null && jsonObject[propertyName] != null)
+                    dynamic jsonObject = JObject.Parse(json);
+                    if (jsonObject is not null && jsonObject[propertyName] is not null)
                     {
-                        return jsonObject[propertyName].ToObject<T>();
+                        JToken propertyValue = jsonObject[propertyName];
+                        if (propertyValue.Type != JTokenType.Null)
+                        {
+                            if (propertyValue.ToObject<T>() != null)
+                            {
+                                T? result = propertyValue.ToObject<T>();
+                                if (result is not null)
+                                {
+                                    return result;
+                                }
+                            }
+                        }
                     }
+                    return defaultValue;
                 }
             }
             catch (Exception ex)

@@ -1,4 +1,4 @@
-﻿namespace SampleHierarchies.Interfaces.Data.Mammals;
+﻿namespace SampleHierarchies.Interfaces.Data.Animals;
 
 /// <summary>
 /// Mammal interface.

@@ -2,9 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PeanutButter.TinyEventAggregator;
-using SampleHierarchies.Data;
+using SampleHierarchies.Data.ScreenSettings;
 using SampleHierarchies.Gui;
-using SampleHierarchies.Interfaces.Data;
 using SampleHierarchies.Interfaces.Services;
 using SampleHierarchies.Services;
 
@@ -60,6 +59,8 @@ internal static class Program
                 services.AddSingleton<LionScreen,LionScreen>();
                 services.AddSingleton<BottlenoseWhaleScreen,BottlenoseWhaleScreen>();
                 services.AddSingleton<ISettings, Settings>();
+                services.AddSingleton<IScreenDefinitionService, ScreenDefinitionService>();
+                services.AddSingleton<MenuManager, MenuManager>();
             });
     }
 

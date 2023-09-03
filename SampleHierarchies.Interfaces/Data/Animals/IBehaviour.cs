@@ -1,4 +1,4 @@
-﻿namespace SampleHierarchies.Interfaces.Data;
+﻿namespace SampleHierarchies.Interfaces.Data.Animals;
 
 /// <summary>
 /// Behaviour actions.

@@ -1,5 +1,6 @@
 ﻿using SampleHierarchies.Data;
 using SampleHierarchies.Data.Mammals;
+using SampleHierarchies.Data.ScreenSettings;
 using SampleHierarchies.Enums;
 using SampleHierarchies.Interfaces.Data;
 using SampleHierarchies.Interfaces.Services;
@@ -18,70 +19,152 @@ namespace SampleHierarchies.Gui
         /// <summary>
         /// Properties
         /// </summary>
-        private IDataService _dataService;
-        private ISettings _settings;
+        private readonly IDataService _dataService;
+        private readonly IScreenDefinitionService _screenDefinitionService;
+        private readonly ScreenDefinition? _currentScreenDefinition;
+        private MenuManager menuManager;
         /// <summary>
         /// Ctor
         /// </summary>
         /// <param name="dataService"></param>
-        public PolarBearScreen(IDataService dataService, ISettings settings)
+        public PolarBearScreen(IDataService dataService, IScreenDefinitionService screenDefinitionService, MenuManager menuManager)
         {
             _dataService = dataService;
-            _settings = settings;
+            _screenDefinitionService = screenDefinitionService;
+            _screenDefinitionJson = "PolarBearsMenu.json";
+            this.menuManager = menuManager;
         }
 
         #endregion
 
         #region Public Methods
         public override void Show()
-        {  
+        {
             while (true) 
             {
-                _settings = new Settings();
-                _settings.ScreenColor = _settings.ReadValue("PolarBearScreenColor", "White");
-                Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), _settings.ScreenColor);
+                menuManager.AddToMenuPath("Polar Bears Screen");
+                Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 0, _screenDefinitionJson);
+                string menuAsString = _screenDefinitionService.GetText(_currentScreenDefinition, 0, _screenDefinitionJson);
+                string[] menuItems = _screenDefinitionService.SplitStringByNewLine(menuAsString);
+                int selectedItemIndex = 0;
 
-                Console.WriteLine();
-                Console.WriteLine("Your available choices are:");
-                Console.WriteLine("0. Exit");
-                Console.WriteLine("1. List all polar bears");
-                Console.WriteLine("2. Create a new polar bear");
-                Console.WriteLine("3. Delete existing polar bear");
-                Console.WriteLine("4. Modify existing polar bear");
-                Console.Write("Please enter your choice: ");
+                //string? menuChoiseAsString = Console.ReadLine();
+                //try
+                //{
+                //    if(menuChoiseAsString is null)
+                //    {
+                //        throw new ArgumentNullException(nameof(menuChoiseAsString));
+                //    }
 
-                string? menuChoiseAsString = Console.ReadLine();
-                try
+                //    PolarBearScreenChoices choice = (PolarBearScreenChoices)Int32.Parse(menuChoiseAsString);
+                //    switch (choice) 
+                //    {
+                //        case PolarBearScreenChoices.List:
+                //            ListOfPolarBears();
+                //            break;
+                //        case PolarBearScreenChoices.Create:
+                //            AddPolarBear();
+                //            break;
+                //        case PolarBearScreenChoices.Delete:
+                //            DeletePolarBear();
+                //            break;
+                //        case PolarBearScreenChoices.Modify:
+                //            EditPolarBearRecent();
+                //            break;
+                //        case PolarBearScreenChoices.Exit:
+                //            // _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+                //            menuManager.RemoveLastFromMenuPath();
+                //            Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+                //            Console.Clear();
+                //            return;
+
+                //    }
+                //}
+                //catch
+                //{
+                //    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 2, _screenDefinitionJson);
+                //}
+                while(true)
                 {
-                    if(menuChoiseAsString is null)
+                    Console.ReadKey();
+                    Console.Clear();
+                    Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+                    for (int i = 0; i < menuItems.Length; i++)
                     {
-                        throw new ArgumentNullException(nameof(menuChoiseAsString));
+                        if (i == selectedItemIndex)
+                        {
+                            Console.ForegroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.BackgroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.Write(menuItems[i]);
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.BackgroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.Write(menuItems[i]);
+                        }
+
+                        Console.WriteLine();
                     }
 
-                    PolarBearScreenChoices choice = (PolarBearScreenChoices)Int32.Parse(menuChoiseAsString);
-                    switch (choice) 
+                    ConsoleKeyInfo keyInfo = Console.ReadKey();
+                    switch (keyInfo.Key)
                     {
-                        case PolarBearScreenChoices.List:
-                            ListOfPolarBears();
+                        case ConsoleKey.UpArrow:
+                            selectedItemIndex = (selectedItemIndex - 1 + menuItems.Length) % menuItems.Length;
+                            Thread.Sleep(150);
                             break;
-                        case PolarBearScreenChoices.Create:
-                            AddPolarBear();
-                            break;
-                        case PolarBearScreenChoices.Delete:
-                            DeletePolarBear();
-                            break;
-                        case PolarBearScreenChoices.Modify:
-                            EditPolarBearRecent();
-                            break;
-                        case PolarBearScreenChoices.Exit:
-                            Console.WriteLine("Returning to previous menu");
-                            return;
 
+                        case ConsoleKey.DownArrow:
+                            selectedItemIndex = (selectedItemIndex + 1) % menuItems.Length;
+                            Thread.Sleep(150);
+                            break;
+
+                        case ConsoleKey.Enter:
+                            if (selectedItemIndex == menuItems.Length - 1)
+                            {
+                                return; // Вихід з програми
+                            }
+                            else
+                            {
+                                Console.WriteLine("\nYou choose: " + menuItems[selectedItemIndex]);
+                                try
+                                {
+                                    PolarBearScreenChoices choice = (PolarBearScreenChoices)selectedItemIndex - 1;
+                                    switch (choice)
+                                    {
+                                        case PolarBearScreenChoices.List:
+                                            ListOfPolarBears();
+                                            Console.ReadKey();
+                                            break;
+                                        case PolarBearScreenChoices.Create:
+                                            AddPolarBear();
+                                            Console.ReadKey();
+                                            break;
+                                        case PolarBearScreenChoices.Delete:
+                                            DeletePolarBear();
+                                            Console.ReadKey();
+                                            break;
+                                        case PolarBearScreenChoices.Modify:
+                                            EditPolarBearRecent();
+                                            Console.ReadKey();
+                                            break;
+                                        case PolarBearScreenChoices.Exit:
+                                            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+                                            menuManager.RemoveLastFromMenuPath();
+                                            Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+                                            Console.Clear();
+                                            return;
+                                    }
+                                }
+                                catch
+                                {
+                                    Console.WriteLine("Invalid choice. Try again.");
+                                }
+                            }
+                            break;
                     }
-                }
-                catch
-                {
-                    Console.WriteLine("Invalid choice. Try again.");
                 }
             }
         }
@@ -98,7 +181,7 @@ namespace SampleHierarchies.Gui
             if (_dataService?.Animals?.Mammals?.PolarBears is not null &&
                 _dataService.Animals.Mammals.PolarBears.Count > 0)
             {
-                Console.WriteLine("Here's a list of polar bears:");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
                 int i = 1;
                 foreach (PolarBear bear in _dataService.Animals.Mammals.PolarBears)
                 {
@@ -109,7 +192,7 @@ namespace SampleHierarchies.Gui
             }
             else
             {
-                Console.WriteLine("The list of polar bears is empty.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 4, _screenDefinitionJson);
             }
         }
 
@@ -117,7 +200,7 @@ namespace SampleHierarchies.Gui
         {
             try
             {
-                Console.Write("What is the name of the bear you want to delete? ");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 5, _screenDefinitionJson);
                 string? name = Console.ReadLine();
                 if (name is null)
                 {
@@ -132,12 +215,12 @@ namespace SampleHierarchies.Gui
                 }
                 else
                 {
-                    Console.WriteLine("Polar bear not found.");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 6, _screenDefinitionJson);
                 }
             }
             catch
             {
-                Console.WriteLine("Invalid input.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 7, _screenDefinitionJson);
             }
         }
 
@@ -148,7 +231,7 @@ namespace SampleHierarchies.Gui
         {
             try
             {
-                Console.Write("What is the name of the polar bear you want to edit? ");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 8, _screenDefinitionJson);
                 string? name = Console.ReadLine();
                 if (name is null)
                 {
@@ -160,17 +243,17 @@ namespace SampleHierarchies.Gui
                 {
                     PolarBear editedPolarBear = AddEditPolarBear();
                     bear.Copy(editedPolarBear);
-                    Console.Write("Bear after edit: ");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 9, _screenDefinitionJson);
                     bear.Display();
                 }
                 else
                 {
-                    Console.WriteLine("Dog not found.");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 10, _screenDefinitionJson);
                 }
             }
             catch
             {
-                Console.WriteLine("Invalid input. Try again.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 11, _screenDefinitionJson);
             }
         }
 
@@ -187,7 +270,7 @@ namespace SampleHierarchies.Gui
             }
             catch
             {
-                Console.WriteLine("Invalid input.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 11, _screenDefinitionJson);
             }
         }
 
@@ -201,35 +284,35 @@ namespace SampleHierarchies.Gui
         {
             bool isSemiAquatic = false;
             string? semiAquaticDescription = "Nothing";
-            Console.Write("What name of the bear? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 12, _screenDefinitionJson);
             string? name = Console.ReadLine();
-            Console.Write("What is the bear's age? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 13, _screenDefinitionJson);
             string? ageAsString = Console.ReadLine();
-            Console.Write("What is the bear's kind of? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 14, _screenDefinitionJson);
             string? kindOf = Console.ReadLine();
-            Console.Write("What is the type of bear's fur? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 15, _screenDefinitionJson);
             string? typeOfFur = Console.ReadLine();
-            Console.Write("What is the size of bear's paws? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 16, _screenDefinitionJson);
             string? largeOfPaws = Console.ReadLine();
-            Console.Write("What is the type of bear's diet? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 17, _screenDefinitionJson);
             string? typeOfDiet = Console.ReadLine();
-            Console.Write("Is the bear semi-aquatic? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 18, _screenDefinitionJson);
             string? IsSemiAquaticAsString = Console.ReadLine();
             switch(IsSemiAquaticAsString)
             {
                 case "Yes":
                     isSemiAquatic = true;
-                    Console.Write("What is the bear description of swimming? ");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 19, _screenDefinitionJson);
                     semiAquaticDescription = Console.ReadLine();
                     break;
                 case "No":
                      isSemiAquatic = false;
                     break;
                 default:
-                    Console.WriteLine("Invalid input");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 11, _screenDefinitionJson);
                     break;
             }
-            Console.Write("How good is his scent? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 20, _screenDefinitionJson);
             string? excellentSenseOfSmell = Console.ReadLine();
 
             if (name is null)
@@ -273,7 +356,6 @@ namespace SampleHierarchies.Gui
 
             return bear;
         }
-
         #endregion
     }
 }

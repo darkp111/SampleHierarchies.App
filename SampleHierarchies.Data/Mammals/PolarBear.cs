@@ -1,18 +1,18 @@
-﻿using SampleHierarchies.Interfaces.Data.Mammals;
-using SampleHierarchies.Interfaces.Data;
+﻿using SampleHierarchies.Interfaces.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using SampleHierarchies.Interfaces.Data.Animals.Mammals;
 
 namespace SampleHierarchies.Data.Mammals
 {
     public class PolarBear : MammalBase, IPolarBear
     {
         #region Public Methods
-      
+
         /// <inheritdoc/>
         public override void Display()
         {
@@ -32,7 +32,7 @@ namespace SampleHierarchies.Data.Mammals
         public string SemiAquaticDescribe { get; set; }
         public string ExcellentSenseOfSmell { get; set; }
 
-        public PolarBear(string name, int age, string kindOf, string typeOfFur, string largePaws, string typeOfDiet, bool isSemiAquatic, string semiAquaticDescribe, string excellentSenseOfSmell) : base(name, age, MammalSpecies.PolarBear) 
+        public PolarBear(string name, int age, string kindOf, string typeOfFur, string largePaws, string typeOfDiet, bool isSemiAquatic, string semiAquaticDescribe, string excellentSenseOfSmell) : base(name, age, MammalSpecies.PolarBear)
         {
             KindOf = kindOf;
             TypeOfFur = typeOfFur;

@@ -2,8 +2,8 @@
 using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 using SampleHierarchies.Data;
+using SampleHierarchies.Data.ScreenSettings;
 using SampleHierarchies.Enums;
-using SampleHierarchies.Interfaces.Data;
 using SampleHierarchies.Interfaces.Services;
 
 namespace SampleHierarchies.Gui;
@@ -20,8 +20,9 @@ public sealed class MainScreen : Screen
     /// </summary>
     private IDataService _dataService;
     private ISettings _settings;
-
-
+    private IScreenDefinitionService _screenDefinitionService;
+    private readonly ScreenDefinition? _currentScreenDefinition;
+    private MenuManager menuManager;
     /// <summary>
     /// Animals screen.
     /// </summary>
@@ -35,11 +36,16 @@ public sealed class MainScreen : Screen
     public MainScreen(
         IDataService dataService,
         AnimalsScreen animalsScreen,
-        ISettings settings)
+        ISettings settings,
+        IScreenDefinitionService screenDefinitionService,
+        MenuManager menuManager)
     {
         _dataService = dataService;
         _animalsScreen = animalsScreen;
         _settings = settings;
+        _screenDefinitionService = screenDefinitionService;
+        _screenDefinitionJson = "MainMenu.json";
+        this.menuManager = menuManager;
     }
 
     #endregion Properties And Ctor
@@ -51,55 +57,131 @@ public sealed class MainScreen : Screen
     {
         while (true)
         {
-            _settings = new Settings();
-            _settings.ScreenColor = _settings.ReadValue("MainScreenColor", "White");
-            Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), _settings.ScreenColor);
+            menuManager.AddToMenuPath("Main Screen");
+            Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 0, _screenDefinitionJson);
+            string menuAsString = _screenDefinitionService.GetText(_currentScreenDefinition, 0, _screenDefinitionJson);
+            string[] menuItems = _screenDefinitionService.SplitStringByNewLine(menuAsString);
+            int selectedItemIndex = 0;
 
-            Console.WriteLine();
-            Console.WriteLine("Your available choices are:");
-            Console.WriteLine("0. Exit");
-            Console.WriteLine("1. Animals");
-            Console.WriteLine("2. Create a new settings");
-            Console.Write("Please enter your choice: ");
 
-            string? choiceAsString = Console.ReadLine();
+            
 
-            // Validate choice
-            try
+
+
+            //// Validate choice
+            //try
+            //{
+            //    if (choiceAsString is null)
+            //    {
+            //        throw new ArgumentNullException(nameof(choiceAsString));
+            //    }
+
+            //    MainScreenChoices choice = (MainScreenChoices)Int32.Parse(choiceAsString);
+            //    switch (choice)
+            //    {
+            //        case MainScreenChoices.Animals:
+            //            Console.Clear();
+            //            _animalsScreen.Show();
+            //            break;
+
+            //        case MainScreenChoices.Settings:
+            //            EditJsonFile("settings.json");                       
+            //            break;
+
+            //        case MainScreenChoices.Exit:
+            //            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+            //            return;
+            //    }
+            //}
+            //catch
+            //{
+            //    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 2, _screenDefinitionJson);
+            //}
+
+            while (true)
             {
-                if (choiceAsString is null)
+                Console.Clear();
+                Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+                for (int i = 0; i < menuItems.Length; i++)
                 {
-                    throw new ArgumentNullException(nameof(choiceAsString));
+                    if (i == selectedItemIndex)
+                    {
+                        Console.ForegroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.BackgroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.Write(menuItems[i]);
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.BackgroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.Write(menuItems[i]);
+                    }
+
+                    Console.WriteLine();
                 }
 
-                MainScreenChoices choice = (MainScreenChoices)Int32.Parse(choiceAsString);
-                switch (choice)
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                //string? choiceAsString = Console.ReadLine();
+
+                switch (keyInfo.Key)
                 {
-                    case MainScreenChoices.Animals:
-                        _animalsScreen.Show();
+                    case ConsoleKey.UpArrow:
+                        selectedItemIndex = (selectedItemIndex - 1 + menuItems.Length) % menuItems.Length;
+                        Thread.Sleep(150);
                         break;
 
-                    case MainScreenChoices.Settings:
-                        EditJsonFile(Settings.FilePath);                        // TODO: implement
+                    case ConsoleKey.DownArrow:
+                        selectedItemIndex = (selectedItemIndex + 1) % menuItems.Length;
+                        Thread.Sleep(150);
                         break;
 
-                    case MainScreenChoices.Exit:
-                        Console.WriteLine("Goodbye.");
-                        return;
+                    case ConsoleKey.Enter:
+                        if (selectedItemIndex == menuItems.Length - 1)
+                        {
+                            return; // Вихід з програми
+                        }
+                        else
+                        {
+                            Console.WriteLine("\nYou choose: " + menuItems[selectedItemIndex]);
+                            try
+                            {
+                                MainScreenChoices choice = (MainScreenChoices)selectedItemIndex - 1;
+                                switch (choice)
+                                {
+                                    case MainScreenChoices.Animals:
+                                        Console.Clear();
+                                        _animalsScreen.Show();
+                                        break;
+
+                                    case MainScreenChoices.Settings:
+                                        EditJsonFile("settings.json");
+                                        break;
+
+                                    case MainScreenChoices.Exit:
+                                        _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+                                        return;
+                                }
+                            }
+                            catch
+                            {
+                                Console.WriteLine("Invalid choice. Try again.");
+                            }
+                        }
+                        break;
                 }
-            }
-            catch
-            {
-                Console.WriteLine("Invalid choice. Try again.");
+                // Validate choice
             }
         }
     }
+
+
 
     #endregion // Public Methods
 
     #region Private Methods
 
-    public void EditJsonFile(string filePath)
+    private void EditJsonFile(string filePath)
     {
         try
         {
@@ -108,19 +190,19 @@ public sealed class MainScreen : Screen
                 string json = File.ReadAllText(filePath);
                 dynamic jsonObject = JObject.Parse(json);
 
-                Console.WriteLine("Enter the name of the property to edit:");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
                 string? propertyName = Console.ReadLine();
 
                 if (jsonObject[propertyName] != null)
                 {
                     Console.WriteLine($"Current value of '{propertyName}': {jsonObject[propertyName]}");
-                    Console.WriteLine("Enter the new value:");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 4, _screenDefinitionJson);
                     string? newValue = Console.ReadLine();
 
-                    // Обновляем значение свойства
+                   
                     jsonObject[propertyName] = JToken.FromObject(newValue);
 
-                    // Сохраняем изменения в файл
+
                     File.WriteAllText(filePath, jsonObject.ToString());
 
                     Console.WriteLine($"Value of property '{propertyName}' updated successfully.");
@@ -136,6 +218,5 @@ public sealed class MainScreen : Screen
             Console.WriteLine($"An error occurred while editing the JSON file: {ex.Message}");
         }
     }
-
     #endregion
 }

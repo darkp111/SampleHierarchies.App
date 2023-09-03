@@ -1,7 +1,7 @@
 ﻿using SampleHierarchies.Data;
 using SampleHierarchies.Data.Mammals;
+using SampleHierarchies.Data.ScreenSettings;
 using SampleHierarchies.Enums;
-using SampleHierarchies.Interfaces.Data;
 using SampleHierarchies.Interfaces.Services;
 
 namespace SampleHierarchies.Gui;
@@ -18,15 +18,21 @@ public sealed class DogsScreen : Screen
     /// </summary>
     private IDataService _dataService;
     private ISettings _settings;
-
+    private IScreenDefinitionService _screenDefinitionService;
+    private readonly ScreenDefinition? _currentScreenDefinition;
+    private MenuManager menuManager;
     /// <summary>
     /// Ctor.
     /// </summary>
     /// <param name="dataService">Data service reference</param>
-    public DogsScreen(IDataService dataService, ISettings settings)
+    public DogsScreen(IDataService dataService, ISettings settings, IScreenDefinitionService screenDefinitionService, MenuManager menuManager)
     {
         _dataService = dataService;
         _settings = settings;
+        _screenDefinitionService = screenDefinitionService;
+        _screenDefinitionJson = "DogsMenu.json";
+        this.menuManager = menuManager;
+
     }
 
     #endregion Properties And Ctor
@@ -38,55 +44,136 @@ public sealed class DogsScreen : Screen
     {
         while (true)
         {
-            _settings = new Settings();
-            _settings.ScreenColor = _settings.ReadValue("DogsScreenColor", "White");
-            Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), _settings.ScreenColor);
+            menuManager.AddToMenuPath("Dogs Screen");
+            Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 0, _screenDefinitionJson);
+            string menuAsString = _screenDefinitionService.GetText(_currentScreenDefinition, 0, _screenDefinitionJson);
+            string[] menuItems = _screenDefinitionService.SplitStringByNewLine(menuAsString);
+            int selectedItemIndex = 0;
 
-            Console.WriteLine();
-            Console.WriteLine("Your available choices are:");
-            Console.WriteLine("0. Exit");
-            Console.WriteLine("1. List all dogs");
-            Console.WriteLine("2. Create a new dog");
-            Console.WriteLine("3. Delete existing dog");
-            Console.WriteLine("4. Modify existing dog");
-            Console.Write("Please enter your choice: ");
+            //string? choiceAsString = Console.ReadLine();
 
-            string? choiceAsString = Console.ReadLine();
+            //// Validate choice
+            //try
+            //{
+            //    if (choiceAsString is null)
+            //    {
+            //        throw new ArgumentNullException(nameof(choiceAsString));
+            //    }
 
-            // Validate choice
-            try
+            //    DogsScreenChoices choice = (DogsScreenChoices)Int32.Parse(choiceAsString);
+            //    switch (choice)
+            //    {
+            //        case DogsScreenChoices.List:
+            //            ListDogs();
+            //            break;
+
+            //        case DogsScreenChoices.Create:
+            //            AddDog(); break;
+
+            //        case DogsScreenChoices.Delete: 
+            //            DeleteDog();
+            //            break;
+
+            //        case DogsScreenChoices.Modify:
+            //            EditDogMain();
+            //            break;
+
+            //        case DogsScreenChoices.Exit:
+            //            // _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+            //            menuManager.RemoveLastFromMenuPath();
+            //            Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+            //            Console.Clear();
+            //            return;
+            //    }
+            //}
+            //catch
+            //{
+            //    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 2, _screenDefinitionJson);
+            //}
+            while(true)
             {
-                if (choiceAsString is null)
+                Console.Clear();
+                Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+                for (int i = 0; i < menuItems.Length; i++)
                 {
-                    throw new ArgumentNullException(nameof(choiceAsString));
+                    if (i == selectedItemIndex)
+                    {
+                        Console.ForegroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.BackgroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.Write(menuItems[i]);
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.BackgroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.Write(menuItems[i]);
+                    }
+
+                    Console.WriteLine();
                 }
 
-                DogsScreenChoices choice = (DogsScreenChoices)Int32.Parse(choiceAsString);
-                switch (choice)
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                switch (keyInfo.Key)
                 {
-                    case DogsScreenChoices.List:
-                        ListDogs();
+                    case ConsoleKey.UpArrow:
+                        selectedItemIndex = (selectedItemIndex - 1 + menuItems.Length) % menuItems.Length;
+                        Thread.Sleep(150);
                         break;
 
-                    case DogsScreenChoices.Create:
-                        AddDog(); break;
-
-                    case DogsScreenChoices.Delete: 
-                        DeleteDog();
+                    case ConsoleKey.DownArrow:
+                        selectedItemIndex = (selectedItemIndex + 1) % menuItems.Length;
+                        Thread.Sleep(150);
                         break;
 
-                    case DogsScreenChoices.Modify:
-                        EditDogMain();
-                        break;
+                    case ConsoleKey.Enter:
+                        if (selectedItemIndex == menuItems.Length - 1)
+                        {
+                            return; // Вихід з програми
+                        }
+                        else
+                        {
+                            Console.WriteLine("\nYou choose: " + menuItems[selectedItemIndex]);
+                            try
+                            {
+                                DogsScreenChoices choice = (DogsScreenChoices)selectedItemIndex - 1;
+                                switch (choice)
+                                {
+                                    case DogsScreenChoices.List:
+                                        ListDogs();
+                                        Console.ReadKey();
+                                        break;
 
-                    case DogsScreenChoices.Exit:
-                        Console.WriteLine("Going back to parent menu.");
-                        return;
+                                    case DogsScreenChoices.Create:
+                                        AddDog();
+                                        Console.ReadKey();
+                                        break;
+
+                                    case DogsScreenChoices.Delete:
+                                        DeleteDog();
+                                        Console.ReadKey();
+                                        break;
+
+                                    case DogsScreenChoices.Modify:
+                                        EditDogMain();
+                                        Console.ReadKey();
+                                        break;
+
+                                    case DogsScreenChoices.Exit:
+                                        _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+                                        menuManager.RemoveLastFromMenuPath();
+                                        Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+                                        Console.Clear();
+                                        return;
+                                }
+                            }
+                            catch
+                            {
+                                Console.WriteLine("Invalid choice. Try again.");
+                            }
+                        }
+                        break;
                 }
-            }
-            catch
-            {
-                Console.WriteLine("Invalid choice. Try again.");
             }
         }
     }
@@ -104,7 +191,7 @@ public sealed class DogsScreen : Screen
         if (_dataService?.Animals?.Mammals?.Dogs is not null &&
             _dataService.Animals.Mammals.Dogs.Count > 0)
         {
-            Console.WriteLine("Here's a list of dogs:");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
             int i = 1;
             foreach (Dog dog in _dataService.Animals.Mammals.Dogs)
             {
@@ -115,7 +202,7 @@ public sealed class DogsScreen : Screen
         }
         else
         {
-            Console.WriteLine("The list of dogs is empty.");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 4, _screenDefinitionJson);
         }
     }
 
@@ -132,7 +219,7 @@ public sealed class DogsScreen : Screen
         }
         catch
         {
-            Console.WriteLine("Invalid input.");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 5, _screenDefinitionJson);
         }
     }
 
@@ -143,7 +230,7 @@ public sealed class DogsScreen : Screen
     {
         try
         {
-            Console.Write("What is the name of the dog you want to delete? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 6, _screenDefinitionJson);
             string? name = Console.ReadLine();
             if (name is null)
             {
@@ -158,12 +245,12 @@ public sealed class DogsScreen : Screen
             }
             else
             {
-                Console.WriteLine("Dog not found.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 7, _screenDefinitionJson);
             }
         }
         catch
         {
-            Console.WriteLine("Invalid input.");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 8, _screenDefinitionJson);
         }
     }
 
@@ -174,7 +261,7 @@ public sealed class DogsScreen : Screen
     {
         try
         {
-            Console.Write("What is the name of the dog you want to edit? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 9, _screenDefinitionJson);
             string? name = Console.ReadLine();
             if (name is null)
             {
@@ -186,17 +273,17 @@ public sealed class DogsScreen : Screen
             {
                 Dog dogEdited = AddEditDog();
                 dog.Copy(dogEdited);
-                Console.Write("Dog after edit:");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 10, _screenDefinitionJson);
                 dog.Display();
             }
             else
             {
-                Console.WriteLine("Dog not found.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 7, _screenDefinitionJson);
             }
         }
         catch
         {
-            Console.WriteLine("Invalid input. Try again.");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 11, _screenDefinitionJson);
         }
     }
 
@@ -206,11 +293,11 @@ public sealed class DogsScreen : Screen
     /// <exception cref="ArgumentNullException"></exception>
     private Dog AddEditDog()
     {
-        Console.Write("What name of the dog? ");
+        _screenDefinitionService.PrintScreen(_currentScreenDefinition, 12, _screenDefinitionJson);
         string? name = Console.ReadLine();
-        Console.Write("What is the dog's age? ");
+        _screenDefinitionService.PrintScreen(_currentScreenDefinition, 13, _screenDefinitionJson);
         string? ageAsString = Console.ReadLine();
-        Console.Write("What is the dog's breed? ");
+        _screenDefinitionService.PrintScreen(_currentScreenDefinition, 14, _screenDefinitionJson);
         string? breed = Console.ReadLine();
 
         if (name is null)
@@ -230,6 +317,5 @@ public sealed class DogsScreen : Screen
 
         return dog;
     }
-
     #endregion // Private Methods
 }

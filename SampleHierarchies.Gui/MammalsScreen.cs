@@ -1,7 +1,9 @@
-﻿using SampleHierarchies.Data;
+﻿using Newtonsoft.Json;
+using SampleHierarchies.Data;
+using SampleHierarchies.Data.ScreenSettings;
 using SampleHierarchies.Enums;
-using SampleHierarchies.Interfaces.Data;
 using SampleHierarchies.Interfaces.Services;
+using SampleHierarchies.Services;
 
 namespace SampleHierarchies.Gui;
 
@@ -20,18 +22,24 @@ public sealed class MammalsScreen : Screen
     private LionScreen _lionScreen;
     private BottlenoseWhaleScreen _bottlenoseWhaleScreen;
     private ISettings _settings;
+    private IScreenDefinitionService _screenDefinitionService;
+    private readonly ScreenDefinition? _currentScreenDefinition;
+    private MenuManager menuManager;
     /// <summary>
     /// Ctor.
     /// </summary>
     /// <param name="dataService">Data service reference</param>
     /// <param name="dogsScreen">Dogs screen</param>
-    public MammalsScreen(DogsScreen dogsScreen, PolarBearScreen polarBearScreen, LionScreen lionScreen,BottlenoseWhaleScreen bottlenoseWhaleScreen, ISettings settings)
+    public MammalsScreen(DogsScreen dogsScreen, PolarBearScreen polarBearScreen, LionScreen lionScreen, BottlenoseWhaleScreen bottlenoseWhaleScreen, ISettings settings, IScreenDefinitionService screenDefinitionService, MenuManager menuManager)
     {
         _dogsScreen = dogsScreen;
         _polarBearScreen = polarBearScreen;
-        _lionScreen = lionScreen; 
+        _lionScreen = lionScreen;
         _bottlenoseWhaleScreen = bottlenoseWhaleScreen;
         _settings = settings;
+        _screenDefinitionService = screenDefinitionService;
+        _screenDefinitionJson = "MammalsMenu.json";
+        this.menuManager = menuManager;
     }
 
     #endregion Properties And Ctor
@@ -43,55 +51,142 @@ public sealed class MammalsScreen : Screen
     {
         while (true)
         {
-            _settings = new Settings();
-            _settings.ScreenColor = _settings.ReadValue("MammalsScreenColor", "White");
-            Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), _settings.ScreenColor);
+            menuManager.AddToMenuPath("Mammals Screen");
+            Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
 
-            Console.WriteLine();
-            Console.WriteLine("Your available choices are:");
-            Console.WriteLine("0. Exit");
-            Console.WriteLine("1. Dogs");
-            Console.WriteLine("2. Polar Bears");
-            Console.WriteLine("3. Lions");
-            Console.WriteLine("4. Bottlenose Whales");
-            Console.Write("Please enter your choice: ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 0, _screenDefinitionJson);
+            string menuAsString = _screenDefinitionService.GetText(_currentScreenDefinition, 0, _screenDefinitionJson);
+            string[] menuItems = _screenDefinitionService.SplitStringByNewLine(menuAsString);
+            int selectedItemIndex = 0;
 
-            string? choiceAsString = Console.ReadLine();
+            //string? choiceAsString = Console.ReadLine();
 
-            // Validate choice
-            try
+            //// Validate choice
+            //try
+            //{
+            //    if (choiceAsString is null)
+            //    {
+            //        throw new ArgumentNullException(nameof(choiceAsString));
+            //    }
+
+            //    MammalsScreenChoices choice = (MammalsScreenChoices)Int32.Parse(choiceAsString);
+            //    switch (choice)
+            //    {
+            //        case MammalsScreenChoices.Dogs:
+            //            Console.Clear();
+            //            _dogsScreen.Show();
+            //            break;
+            //        case MammalsScreenChoices.PolarBears:
+            //            Console.Clear();
+            //            _polarBearScreen.Show();
+            //            break;
+            //        case MammalsScreenChoices.Lions:
+            //            Console.Clear();
+            //            _lionScreen.Show();
+            //            break;
+            //        case MammalsScreenChoices.Whales:
+            //            Console.Clear();
+            //            _bottlenoseWhaleScreen.Show();
+            //            break;
+            //        case MammalsScreenChoices.Exit:
+            //            // _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+            //            menuManager.RemoveLastFromMenuPath();
+            //            Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+            //            Console.Clear();
+            //            return;
+            //    }
+            //}
+            //catch
+            //{
+            //    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 2, _screenDefinitionJson);
+            //}
+
+            while(true)
             {
-                if (choiceAsString is null)
+                Console.Clear();
+                Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+                for (int i = 0; i < menuItems.Length; i++)
                 {
-                    throw new ArgumentNullException(nameof(choiceAsString));
+                    if (i == selectedItemIndex)
+                    {
+                        Console.ForegroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.BackgroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.Write(menuItems[i]);
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.BackgroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                        Console.Write(menuItems[i]);
+                    }
+
+                    Console.WriteLine();
                 }
 
-                MammalsScreenChoices choice = (MammalsScreenChoices)Int32.Parse(choiceAsString);
-                switch (choice)
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                switch (keyInfo.Key)
                 {
-                    case MammalsScreenChoices.Dogs:
-                        _dogsScreen.Show();
+                    case ConsoleKey.UpArrow:
+                        selectedItemIndex = (selectedItemIndex - 1 + menuItems.Length) % menuItems.Length;
+                        Thread.Sleep(150);
                         break;
-                    case MammalsScreenChoices.PolarBears:
-                        _polarBearScreen.Show(); 
+
+                    case ConsoleKey.DownArrow:
+                        selectedItemIndex = (selectedItemIndex + 1) % menuItems.Length;
+                        Thread.Sleep(150);
                         break;
-                    case MammalsScreenChoices.Lions:
-                        _lionScreen.Show(); 
+
+                    case ConsoleKey.Enter:
+                        if (selectedItemIndex == menuItems.Length - 1)
+                        {
+                            return; // Вихід з програми
+                        }
+                        else
+                        {
+                            Console.WriteLine("\nYou choose: " + menuItems[selectedItemIndex]);
+                            try
+                            {
+                                MammalsScreenChoices choice = (MammalsScreenChoices)selectedItemIndex - 1;
+                                switch (choice)
+                                {
+                                    case MammalsScreenChoices.Dogs:
+                                        Console.Clear();
+                                        _dogsScreen.Show();
+                                        break;
+                                    case MammalsScreenChoices.PolarBears:
+                                        Console.Clear();
+                                        _polarBearScreen.Show();
+                                        break;
+                                    case MammalsScreenChoices.Lions:
+                                        Console.Clear();
+                                        _lionScreen.Show();
+                                        break;
+                                    case MammalsScreenChoices.Whales:
+                                        Console.Clear();
+                                        _bottlenoseWhaleScreen.Show();
+                                        break;
+                                    case MammalsScreenChoices.Exit:
+                                        // _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+                                        menuManager.RemoveLastFromMenuPath();
+                                        Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+                                        Console.Clear();
+                                        return;
+                                }
+                            }
+                            catch
+                            {
+                                Console.WriteLine("Invalid choice. Try again.");
+                            }
+                        }
                         break;
-                    case MammalsScreenChoices.Whales:
-                        _bottlenoseWhaleScreen.Show();
-                        break;
-                    case MammalsScreenChoices.Exit:
-                        Console.WriteLine("Going back to parent menu.");
-                        return;
                 }
-            }
-            catch
-            {
-                Console.WriteLine("Invalid choice. Try again.");
             }
         }
     }
 
     #endregion // Public Methods
+
+    #region Private methods
+
+    #endregion
 }

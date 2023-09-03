@@ -1,7 +1,7 @@
 ﻿using SampleHierarchies.Data;
 using SampleHierarchies.Data.Mammals;
+using SampleHierarchies.Data.ScreenSettings;
 using SampleHierarchies.Enums;
-using SampleHierarchies.Interfaces.Data;
 using SampleHierarchies.Interfaces.Services;
 using System;
 using System.Collections.Generic;
@@ -19,15 +19,20 @@ namespace SampleHierarchies.Gui
         /// </summary>
         private IDataService _dataService;
         private ISettings _settings;
-
+        private IScreenDefinitionService _screenDefinitionService;
+        private readonly ScreenDefinition? _currentScreenDefinition;
+        private MenuManager menuManager;
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="dataService"></param>
-        public LionScreen(IDataService dataService, ISettings settings)
+        public LionScreen(IDataService dataService, ISettings settings,IScreenDefinitionService screenDefinitionService, MenuManager menuManager)
         {
             _dataService = dataService;
             _settings = settings;
+            _screenDefinitionService = screenDefinitionService;
+            _screenDefinitionJson = "LionsMenu.json";
+            this.menuManager = menuManager;
         }
 
         #endregion
@@ -37,52 +42,130 @@ namespace SampleHierarchies.Gui
         {
             while (true) 
             {
-                _settings = new Settings();
-                _settings.ScreenColor = _settings.ReadValue("LionScreenColor", "White");
-                Console.ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), _settings.ScreenColor);
+                menuManager.AddToMenuPath("Lions Screen");
+                Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 0, _screenDefinitionJson);
+                string menuAsString = _screenDefinitionService.GetText(_currentScreenDefinition, 0, _screenDefinitionJson);
+                string[] menuItems = _screenDefinitionService.SplitStringByNewLine(menuAsString);
+                int selectedItemIndex = 0;
 
-                Console.WriteLine();
-                Console.WriteLine("Your available choices are:");
-                Console.WriteLine("0. Exit");
-                Console.WriteLine("1. List all lions");
-                Console.WriteLine("2. Create a new lion");
-                Console.WriteLine("3. Delete existing lion");
-                Console.WriteLine("4. Modify existing lion");
-                Console.Write("Please enter your choice: ");
+                //string? menuChoiseAsString = Console.ReadLine();
 
-                string? menuChoiseAsString = Console.ReadLine();
+                //try
+                //{
+                //    if (menuChoiseAsString is null)
+                //    {
+                //        throw new ArgumentNullException(nameof(menuChoiseAsString));
+                //    }
 
-                try
+                //    LionScreenChoices choice = (LionScreenChoices)Int32.Parse(menuChoiseAsString);
+
+                //    switch(choice)
+                //    {
+                //        case LionScreenChoices.List:
+                //            ListOfLions();
+                //            break;
+                //        case LionScreenChoices.Create:
+                //            AddLion();
+                //            break;
+                //        case LionScreenChoices.Delete:
+                //            DeleteLion();
+                //            break;
+                //        case LionScreenChoices.Modify:
+                //            EditRecentLion();
+                //            break;
+                //        case LionScreenChoices.Exit:
+                //            // _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+                //            menuManager.RemoveLastFromMenuPath();
+                //            Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+                //            Console.Clear();
+                //            return ;
+                //    }
+                //}
+                //catch
+                //{
+                //    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 2, _screenDefinitionJson);
+                //}
+
+                while (true)
                 {
-                    if (menuChoiseAsString is null)
+                    Console.Clear();
+                    Console.WriteLine("Current Menu Path: " + menuManager.GetCurrentMenuPath());
+                    for (int i = 0; i < menuItems.Length; i++)
                     {
-                        throw new ArgumentNullException(nameof(menuChoiseAsString));
+                        if (i == selectedItemIndex)
+                        {
+                            Console.ForegroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.BackgroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.Write(menuItems[i]);
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = _screenDefinitionService.GetBackgroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.BackgroundColor = _screenDefinitionService.GetForegroundColor(_currentScreenDefinition, 0, _screenDefinitionJson);
+                            Console.Write(menuItems[i]);
+                        }
+
+                        Console.WriteLine();
                     }
 
-                    LionScreenChoices choice = (LionScreenChoices)Int32.Parse(menuChoiseAsString);
-
-                    switch(choice)
+                    ConsoleKeyInfo keyInfo = Console.ReadKey();
+                    switch (keyInfo.Key)
                     {
-                        case LionScreenChoices.List:
-                            ListOfLions();
+                        case ConsoleKey.UpArrow:
+                            selectedItemIndex = (selectedItemIndex - 1 + menuItems.Length) % menuItems.Length;
+                            Thread.Sleep(150);
                             break;
-                        case LionScreenChoices.Create:
-                            AddLion();
+
+                        case ConsoleKey.DownArrow:
+                            selectedItemIndex = (selectedItemIndex + 1) % menuItems.Length;
+                            Thread.Sleep(150);
                             break;
-                        case LionScreenChoices.Delete:
-                            DeleteLion();
+
+                        case ConsoleKey.Enter:
+                            if (selectedItemIndex == menuItems.Length - 1)
+                            {
+                                return; // Вихід з програми
+                            }
+                            else
+                            {
+                                Console.WriteLine("\nYou choose: " + menuItems[selectedItemIndex]);
+                                try
+                                {
+                                    LionScreenChoices choice = (LionScreenChoices)selectedItemIndex - 1;
+                                    switch (choice)
+                                    {
+                                        case LionScreenChoices.List:
+                                            ListOfLions();
+                                            Console.ReadKey();
+                                            break;
+                                        case LionScreenChoices.Create:
+                                            AddLion();
+                                            Console.ReadKey();
+                                            break;
+                                        case LionScreenChoices.Delete:
+                                            DeleteLion();
+                                            Console.ReadKey();
+                                            break;
+                                        case LionScreenChoices.Modify:
+                                            EditRecentLion();
+                                            Console.ReadKey();
+                                            break;
+                                        case LionScreenChoices.Exit:
+                                            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 1, _screenDefinitionJson);
+                                            menuManager.RemoveLastFromMenuPath();
+                                            Console.WriteLine("Returning to " + menuManager.GetCurrentMenuPath());
+                                            Console.Clear();
+                                            return;
+                                    }
+                                }
+                                catch
+                                {
+                                    Console.WriteLine("Invalid choice. Try again.");
+                                }
+                            }
                             break;
-                        case LionScreenChoices.Modify:
-                            EditRecentLion();
-                            break;
-                        case LionScreenChoices.Exit:
-                            Console.WriteLine("Returning to previous menu");
-                            return ;
                     }
-                }
-                catch
-                {
-                    Console.WriteLine("Invalid choice. Try again.");
                 }
             }
         }
@@ -96,7 +179,7 @@ namespace SampleHierarchies.Gui
             if (_dataService?.Animals?.Mammals?.Lions is not null &&
                 _dataService.Animals.Mammals.Lions.Count > 0)
             {
-                Console.WriteLine("Here's a list of lions:");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 4, _screenDefinitionJson);
                 int i = 1;
                 foreach (Lion lion in _dataService.Animals.Mammals.Lions)
                 {
@@ -104,10 +187,11 @@ namespace SampleHierarchies.Gui
                     lion.Display();
                     i++;
                 }
+                Console.ReadKey();
             }
             else
             {
-                Console.WriteLine("The list of lions is empty.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 5, _screenDefinitionJson);
             }
         }
 
@@ -124,7 +208,7 @@ namespace SampleHierarchies.Gui
             }
             catch
             {
-                Console.WriteLine("Invalid input.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
             }
         }
 
@@ -135,7 +219,7 @@ namespace SampleHierarchies.Gui
         {
             try
             {
-                Console.Write("What is the name of the lion you want to delete? ");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 6, _screenDefinitionJson);
                 string? name = Console.ReadLine();
                 if (name is null)
                 {
@@ -150,12 +234,12 @@ namespace SampleHierarchies.Gui
                 }
                 else
                 {
-                    Console.WriteLine("Lion not found.");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 7, _screenDefinitionJson);
                 }
             }
             catch
             {
-                Console.WriteLine("Invalid input.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
             }
         }
 
@@ -166,7 +250,7 @@ namespace SampleHierarchies.Gui
         {
             try
             {
-                Console.Write("What is the name of the lion you want to edit? ");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 8, _screenDefinitionJson);
                 string? name = Console.ReadLine();
                 if (name is null)
                 {
@@ -178,17 +262,17 @@ namespace SampleHierarchies.Gui
                 {
                     Lion dogEdited = AddEditLion();
                     lion.Copy(dogEdited);
-                    Console.Write("Lion after edit:");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 9, _screenDefinitionJson);
                     lion.Display();
                 }
                 else
                 {
-                    Console.WriteLine("Lion not found.");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 10, _screenDefinitionJson);
                 }
             }
             catch
             {
-                Console.WriteLine("Invalid input. Try again.");
+                _screenDefinitionService.PrintScreen(_currentScreenDefinition, 2, _screenDefinitionJson);
             }
         }
 
@@ -207,74 +291,75 @@ namespace SampleHierarchies.Gui
             string? PuckHuntingDescription = "Nothing";
             string? RoaringCommunicationDescription = "Nothing";
             string? TerritoryDefenseDescription = "Nothing";
-            Console.Write("What is the name of lion? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 11, _screenDefinitionJson);
             string? name = Console.ReadLine();
-            Console.Write("What is the age of lion? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 12, _screenDefinitionJson);
             string? ageAsString = Console.ReadLine();
-            Console.Write("Is the lion apex predator? (Yes/No) ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 13, _screenDefinitionJson);
             string? IsApexPredatorAsString = Console.ReadLine();
             switch(IsApexPredatorAsString)
             {
                 case "Yes":
                     IsApexPredator = true;
-                    Console.Write("Please, describe the apex predator ");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 14, _screenDefinitionJson);
                     ApexPredatorDescription = Console.ReadLine();
                     break;
                 case "No":
                     IsApexPredator = false;
                     break;
                 default:
-                    Console.WriteLine("Invalid input");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
                     break;
             }
-            Console.Write("Does your lion hunt in packs? (Yes/No) ");
+           
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 15, _screenDefinitionJson);
             string? IsPuckHunterAsString = Console.ReadLine();
             switch(IsPuckHunterAsString) 
             {
                 case "Yes":
                     IsPuckHunter = true;
-                    Console.Write("Please, describe the puck hunting of this lion ");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 16, _screenDefinitionJson);
                     PuckHuntingDescription = Console.ReadLine();
                     break;
                 case "No":
                     IsPuckHunter = false;
                     break;
                 default:
-                    Console.WriteLine("Invalid input");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
                     break;
             }
-            Console.Write("What mane dose your lion have? ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 17, _screenDefinitionJson);
             string? mane = Console.ReadLine();
-            Console.Write("Does your lion communicate with roar? (Yes/No) ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 18, _screenDefinitionJson);
             string? IsRoaringCommunicateAsString = Console.ReadLine();
             switch(IsRoaringCommunicateAsString) 
             {
                 case "Yes":
                     IsRoarCommunication = true;
-                    Console.Write("Please, describe the communication of your lion ");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 19, _screenDefinitionJson);
                     RoaringCommunicationDescription = Console.ReadLine();
                     break;
                 case "No":
                     IsRoarCommunication = false;
                     break;
                 default:
-                    Console.WriteLine("Invalid input");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
                     break;
             }
-            Console.Write("Does your lion defense his territory? (Yes/No) ");
+            _screenDefinitionService.PrintScreen(_currentScreenDefinition, 20, _screenDefinitionJson);
             string? IsTerritoryDefenseAsString = Console.ReadLine();
             switch (IsTerritoryDefenseAsString)
             {
                 case "Yes":
                     IsTerritoryDefense = true;
-                    Console.Write("Please, describe how your lion defense his territory ");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 21, _screenDefinitionJson);
                     TerritoryDefenseDescription = Console.ReadLine();
                     break;
                 case "No":
                     IsTerritoryDefense = false;
                     break;
                 default:
-                    Console.WriteLine("Invalid input");
+                    _screenDefinitionService.PrintScreen(_currentScreenDefinition, 3, _screenDefinitionJson);
                     break;
             }
 

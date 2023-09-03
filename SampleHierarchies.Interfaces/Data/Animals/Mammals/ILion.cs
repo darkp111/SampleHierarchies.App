@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SampleHierarchies.Interfaces.Data.Mammals
+namespace SampleHierarchies.Interfaces.Data.Animals.Mammals
 {
     public interface ILion : IMammal
     {
